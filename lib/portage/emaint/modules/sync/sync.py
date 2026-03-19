@@ -257,6 +257,13 @@ class SyncRepos:
         # Reload the whole config.
         portage._sync_mode = False
         self._reload_config()
+
+        try:
+            from portage.util._dbus import send_dbus_signal
+            send_dbus_signal("SyncFinished", "i", 1 if returncode else 0)
+        except Exception:
+            pass
+
         self._do_pkg_moves()
         msgs.extend(self._check_updates())
         display_news_notification(

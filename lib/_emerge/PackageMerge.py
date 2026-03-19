@@ -78,5 +78,17 @@ class PackageMerge(CompositeTask):
             msg = self._make_msg(pkg, action_desc, preposition, counter_str)
             self.merge.statusMessage(msg)
 
+        try:
+            from portage.util._dbus import send_dbus_signal
+            send_dbus_signal("PackageMergeFinished", "ssisib",
+                             str(pkg.cpv),
+                             str(pkg.repo),
+                             int(pkg_count.curval) if pkg_count else 0,
+                             str(pkg_count.maxval) if pkg_count else "0",
+                             int(task.returncode),
+                             bool(getattr(self, 'postinst_failure', False)))
+        except Exception:
+            pass
+
         self._final_exit(task)
         self.wait()

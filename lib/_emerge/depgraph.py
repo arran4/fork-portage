@@ -10791,11 +10791,21 @@ class depgraph:
             writemsg("".join(problems), noiselevel=-1)
         elif write_to_file and roots:
             writemsg("\nAutounmask changes successfully written.\n", noiselevel=-1)
+            try:
+                from portage.util._dbus import send_dbus_signal
+                send_dbus_signal("AutoUnmaskWrite", "b", True)
+            except Exception:
+                pass
             if autounmask_continue:
                 return True
             for root in roots:
                 chk_updated_cfg_files(root, [os.path.join(os.sep, USER_CONFIG_PATH)])
         elif not pretend and not autounmask_write and roots:
+            try:
+                from portage.util._dbus import send_dbus_signal
+                send_dbus_signal("AutoUnmaskWrite", "b", False)
+            except Exception:
+                pass
             writemsg(
                 "\nUse --autounmask-write to write changes to config files (honoring\n"
                 "CONFIG_PROTECT). Carefully examine the list of proposed changes,\n"

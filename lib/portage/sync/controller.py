@@ -189,6 +189,13 @@ class SyncManager:
             msg = f"=== Sync completed for {self.repo.name}"
             self.logger(self.xterm_titles, msg)
             writemsg_level(msg + "\n")
+
+        try:
+            from portage.util._dbus import send_dbus_signal
+            send_dbus_signal("RepoSyncFinished", "si", str(self.repo.name), int(exitcode))
+        except Exception:
+            pass
+
         if self.callback:
             self.callback(exitcode, updatecache_flg)
 

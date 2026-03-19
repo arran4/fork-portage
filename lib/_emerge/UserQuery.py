@@ -50,6 +50,13 @@ class UserQuery:
         if "--alert" in self.myopts:
             prompt = "\a" + prompt
         print(bold(prompt), end=" ")
+
+        try:
+            from portage.util._dbus import send_dbus_signal
+            send_dbus_signal("UserQuery", "ss", str(prompt), str(responses))
+        except Exception:
+            pass
+
         try:
             while True:
                 try:
