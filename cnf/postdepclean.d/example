@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Example /etc/portage/postdepclean.d script. Make it executable (chmod +x) for
+# Portage to process it.
+#
+# postdepclean.d hooks are called at the end of a successful emerge --depclean operation.
+# They take no arguments.
+
+echo "* In postdepclean hook"
+
+# exit 0

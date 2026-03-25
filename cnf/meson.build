@@ -129,6 +129,41 @@ install_data(
 
 install_data(
     [
+        'ask.d/example'
+    ],
+    install_dir : portage_datadir / 'config' / 'ask.d'
+)
+
+install_data(
+    [
+        'ebuild.postfail.d/example'
+    ],
+    install_dir : portage_datadir / 'config' / 'ebuild.postfail.d'
+)
+
+install_data(
+    [
+        'ebuild.postmerge.d/example'
+    ],
+    install_dir : portage_datadir / 'config' / 'ebuild.postmerge.d'
+)
+
+install_data(
+    [
+        'postdepclean.d/example'
+    ],
+    install_dir : portage_datadir / 'config' / 'postdepclean.d'
+)
+
+install_data(
+    [
+        'postemerge.d/example'
+    ],
+    install_dir : portage_datadir / 'config' / 'postemerge.d'
+)
+
+install_data(
+    [
         'sets/portage.conf'
     ],
     install_dir : portage_datadir / 'config' / 'sets'

@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Example /etc/portage/ebuild.postfail.d script. Make it executable (chmod +x) for
+# Portage to process it.
+#
+# ebuild.postfail.d hooks are called when an individual package merge fails.
+# The arguments are the package CPV and ROOT.
+
+package_cpv=${1}
+root_dir=${2}
+
+echo "* In postfail hook for ${package_cpv}"
+echo "** ROOT: ${root_dir}"
+
+# exit 0

@@ -68,6 +68,11 @@ postsync.d
 repo.postsync.d
 repos.conf
 sets.conf
+ask.d
+ebuild.postfail.d
+ebuild.postmerge.d
+postdepclean.d
+postemerge.d
 .fi
 .TP
 .BR /etc/portage/env/
@@ -957,6 +962,41 @@ with the following three arguments:
 Using this information it is possible for hooks to be run for only a certain
 repository.  This way other update actions can be performed for that repository
 only.
+.fi
+.TP
+.BR ask.d/
+This directory is for user supplied hooks to be run before an interactive
+user prompt ("ask").  Each script is called in lexical order with the path to
+a file containing the packages and operations involved as its only argument.
+.fi
+.TP
+.BR ebuild.postfail.d/
+This directory is for user supplied hooks to be run when a package merge
+has failed.  Each script is called in lexical order with the following
+arguments:
+.I args:
+        package cpv, ROOT
+.fi
+.TP
+.BR ebuild.postmerge.d/
+This directory is for user supplied hooks to be run when a package merge
+has succeeded.  Each script is called in lexical order with the following
+arguments:
+.I args:
+        package cpv, ROOT
+.fi
+.TP
+.BR postdepclean.d/
+This directory is for user supplied hooks to be run after an emerge \-\-depclean
+operation.  Each script is called in lexical order without any arguments.
+.fi
+.TP
+.BR postemerge.d/
+This directory is for user supplied hooks to be run at the very end of
+an emerge session.  Each script is called in lexical order with the following
+arguments:
+.I args:
+        primary action, return value, keep-going flag
 .fi
 .TP
 .BR repos.conf
