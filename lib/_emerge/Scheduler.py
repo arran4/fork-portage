@@ -35,6 +35,7 @@ from portage.package.ebuild.digestcheck import digestcheck
 from portage.package.ebuild.digestgen import digestgen
 from portage.package.ebuild.doebuild import _check_temp_dir, _prepare_self_update
 from portage.package.ebuild.prepare_build_dirs import prepare_build_dirs
+from portage.util.hooks import perform_hooks
 
 import _emerge
 from _emerge.BinpkgFetcher import BinpkgFetcher
@@ -1132,6 +1133,11 @@ class Scheduler(PollScheduler):
             self._failed_pkg_msg(self._failed_pkgs[-1], "emerge", "for")
             self._status_display.failed = len(self._failed_pkgs)
 
+        perform_hooks(
+            "ebuild.postfail.d",
+            *(pkg.cpv, pkg.root),
+        )
+
     def merge(self):
         if "--resume" in self.myopts:
             # We're resuming.
@@ -1521,6 +1527,11 @@ class Scheduler(PollScheduler):
             if not self._terminated_tasks:
                 self._failed_pkg_msg(self._failed_pkgs[-1], "install", "to")
                 self._status_display.failed = len(self._failed_pkgs)
+
+            perform_hooks(
+                "ebuild.postfail.d",
+                *(pkg.cpv, pkg.root),
+            )
             return
 
         if merge.postinst_failure:
@@ -1536,6 +1547,11 @@ class Scheduler(PollScheduler):
             )
             self._failed_pkg_msg(
                 self._failed_pkgs_all[-1], "execute postinst for", "for"
+            )
+
+            perform_hooks(
+                "ebuild.postfail.d",
+                *(pkg.cpv, pkg.root),
             )
 
         self._task_complete(pkg)
@@ -1610,6 +1626,11 @@ class Scheduler(PollScheduler):
             if not self._terminated_tasks:
                 self._failed_pkg_msg(self._failed_pkgs[-1], "emerge", "for")
                 self._status_display.failed = len(self._failed_pkgs)
+
+            perform_hooks(
+                "ebuild.postfail.d",
+                *(build.pkg.cpv, build.pkg.root),
+            )
             self._deallocate_config(build.settings)
         self._jobs -= 1
         self._status_display.running = self._jobs

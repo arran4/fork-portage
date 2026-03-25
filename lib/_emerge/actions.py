@@ -67,6 +67,7 @@ from portage.util import (
 from portage.util.digraph import digraph
 from portage.util.path import first_existing
 from portage.util.SlotObject import SlotObject
+from portage.util.hooks import perform_hooks
 from portage.util._async.run_main_scheduler import run_main_scheduler
 from portage.util._async.SchedulerInterface import SchedulerInterface
 from portage.util._eventloop.global_event_loop import global_event_loop
@@ -522,6 +523,18 @@ def action_build(
             else:
                 prompt = "Would you like to merge these packages?"
         print()
+        if prompt is not None and "--ask" in myopts:
+            import tempfile
+            with tempfile.NamedTemporaryFile(mode='w', delete=False, prefix='ask_packages_') as f:
+                for pkg in mymergelist:
+                    if isinstance(pkg, Package):
+                        f.write(f"{pkg.cpv} {pkg.operation}\n")
+                f.flush()
+                perform_hooks("ask.d", f.name)
+            try:
+                os.unlink(f.name)
+            except OSError:
+                pass
         uq = UserQuery(myopts)
         if (
             prompt is not None
@@ -882,6 +895,11 @@ def action_depclean(
             ordered=ordered,
             scheduler=scheduler,
         )
+
+        if action == "depclean":
+            perform_hooks(
+                "postdepclean.d",
+            )
 
     if action == "prune":
         return rval
