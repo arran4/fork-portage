@@ -97,6 +97,23 @@ def multiple_actions(action1, action2):
     sys.exit(1)
 
 
+
+
+class _valid_autounmask_choices:
+    def __contains__(self, s):
+        if s in ("True", "y", "n"):
+            return True
+        for token in s.split(","):
+            if token not in ("y", "n", "continue", "write", "keep-keywords", "keep-masks", "keep-license", "keep-use", "backtrack-y", "backtrack-n", "only", "unrestricted-atoms"):
+                return False
+        return True
+
+    def __iter__(self):
+        return iter(["True", "y", "n", "continue", "write", "keep-keywords", "keep-masks", "keep-license", "keep-use", "backtrack-y", "backtrack-n", "only", "unrestricted-atoms"])
+
+valid_autounmask_choices = _valid_autounmask_choices()
+
+
 def insert_optional_args(args):
     """
     Parse optional arguments and insert a value if one has
@@ -136,12 +153,13 @@ def insert_optional_args(args):
 
     valid_integers_or_y_or_n = valid_integers_or_y_or_n()
 
+
     new_args = []
 
     default_arg_opts = {
         "--alert": y_or_n,
         "--ask": y_or_n,
-        "--autounmask": y_or_n,
+        "--autounmask": valid_autounmask_choices,
         "--autounmask-continue": y_or_n,
         "--autounmask-only": y_or_n,
         "--autounmask-keep-keywords": y_or_n,
@@ -320,6 +338,7 @@ def parse_opts(tmpcmdline, silent=False):
     y_or_n = ("y", "n")
     true_y_or_n = ("True", "y", "n")
     true_y = ("True", "y")
+
     argument_options = {
         "--alert": {
             "shortopt": "-A",
@@ -333,7 +352,7 @@ def parse_opts(tmpcmdline, silent=False):
         },
         "--autounmask": {
             "help": "automatically unmask packages",
-            "choices": true_y_or_n,
+            "choices": valid_autounmask_choices,
         },
         "--autounmask-backtrack": {
             "help": (
@@ -804,8 +823,32 @@ def parse_opts(tmpcmdline, silent=False):
     else:
         myoptions.ask = None
 
-    if myoptions.autounmask in true_y:
-        myoptions.autounmask = True
+    if myoptions.autounmask:
+        if myoptions.autounmask in true_y:
+            myoptions.autounmask = True
+        elif myoptions.autounmask not in ("n", "False"):
+            for token in myoptions.autounmask.split(","):
+                if token == "continue":
+                    myoptions.autounmask_continue = True
+                elif token == "write":
+                    myoptions.autounmask_write = True
+                elif token == "only":
+                    myoptions.autounmask_only = True
+                elif token == "keep-keywords":
+                    myoptions.autounmask_keep_keywords = True
+                elif token == "keep-masks":
+                    myoptions.autounmask_keep_masks = True
+                elif token == "keep-license":
+                    myoptions.autounmask_license = "n"
+                elif token == "keep-use":
+                    myoptions.autounmask_use = "n"
+                elif token == "backtrack-y":
+                    myoptions.autounmask_backtrack = "y"
+                elif token == "backtrack-n":
+                    myoptions.autounmask_backtrack = "n"
+                elif token == "unrestricted-atoms":
+                    myoptions.autounmask_unrestricted_atoms = True
+            myoptions.autounmask = True
 
     if myoptions.autounmask_continue in true_y:
         myoptions.autounmask_continue = True
