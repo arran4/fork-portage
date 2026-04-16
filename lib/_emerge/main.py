@@ -100,16 +100,20 @@ def multiple_actions(action1, action2):
 
 
 class _valid_autounmask_choices:
+    _SUB_OPTIONS = (
+        "y", "n", "continue", "write", "keep-keywords", "keep-masks",
+        "keep-license", "keep-use", "backtrack-y", "backtrack-n", "only",
+        "unrestricted-atoms",
+    )
+    _SUB_OPTIONS_SET = frozenset(_SUB_OPTIONS)
+
     def __contains__(self, s):
         if s in ("True", "y", "n"):
             return True
-        for token in s.split(","):
-            if token not in ("y", "n", "continue", "write", "keep-keywords", "keep-masks", "keep-license", "keep-use", "backtrack-y", "backtrack-n", "only", "unrestricted-atoms"):
-                return False
-        return True
+        return all(token in self._SUB_OPTIONS_SET for token in s.split(","))
 
     def __iter__(self):
-        return iter(["True", "y", "n", "continue", "write", "keep-keywords", "keep-masks", "keep-license", "keep-use", "backtrack-y", "backtrack-n", "only", "unrestricted-atoms"])
+        return iter(("True",) + self._SUB_OPTIONS)
 
 valid_autounmask_choices = _valid_autounmask_choices()
 
@@ -827,27 +831,22 @@ def parse_opts(tmpcmdline, silent=False):
         if myoptions.autounmask in true_y:
             myoptions.autounmask = True
         elif myoptions.autounmask not in ("n", "False"):
+            autounmask_action_map = {
+                "continue": ("autounmask_continue", True),
+                "write": ("autounmask_write", True),
+                "only": ("autounmask_only", True),
+                "keep-keywords": ("autounmask_keep_keywords", True),
+                "keep-masks": ("autounmask_keep_masks", True),
+                "keep-license": ("autounmask_license", "n"),
+                "keep-use": ("autounmask_use", "n"),
+                "backtrack-y": ("autounmask_backtrack", "y"),
+                "backtrack-n": ("autounmask_backtrack", "n"),
+                "unrestricted-atoms": ("autounmask_unrestricted_atoms", True),
+            }
             for token in myoptions.autounmask.split(","):
-                if token == "continue":
-                    myoptions.autounmask_continue = True
-                elif token == "write":
-                    myoptions.autounmask_write = True
-                elif token == "only":
-                    myoptions.autounmask_only = True
-                elif token == "keep-keywords":
-                    myoptions.autounmask_keep_keywords = True
-                elif token == "keep-masks":
-                    myoptions.autounmask_keep_masks = True
-                elif token == "keep-license":
-                    myoptions.autounmask_license = "n"
-                elif token == "keep-use":
-                    myoptions.autounmask_use = "n"
-                elif token == "backtrack-y":
-                    myoptions.autounmask_backtrack = "y"
-                elif token == "backtrack-n":
-                    myoptions.autounmask_backtrack = "n"
-                elif token == "unrestricted-atoms":
-                    myoptions.autounmask_unrestricted_atoms = True
+                action = autounmask_action_map.get(token)
+                if action:
+                    setattr(myoptions, *action)
             myoptions.autounmask = True
 
     if myoptions.autounmask_continue in true_y:
