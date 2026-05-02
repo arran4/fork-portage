@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Example /etc/portage/ask.d script. Make it executable (chmod +x) for
+# Portage to process it.
+#
+# ask.d hooks are called before Portage prompts the user for confirmation.
+# The only argument is the path to a temporary file containing the package
+# list and their planned operations.
+
+package_file=${1}
+
+echo "* In ask hook"
+if [ -n "${package_file}" ] && [ -e "${package_file}" ]; then
+	echo "** Packages to be merged/unmerged:"
+	cat "${package_file}"
+fi
+
+# exit 0

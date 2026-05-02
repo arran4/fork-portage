@@ -7,6 +7,7 @@ from _emerge.CompositeTask import CompositeTask
 from portage import os
 from portage.dbapi._MergeProcess import MergeProcess
 from portage.util._async.AsyncTaskFuture import AsyncTaskFuture
+from portage.util.hooks import perform_hooks
 
 
 class EbuildMerge(CompositeTask):
@@ -82,6 +83,11 @@ class EbuildMerge(CompositeTask):
         logger.log(
             f" ::: completed emerge ({pkg_count.curval} of {pkg_count.maxval}) "
             f"{pkg.cpv} to {pkg.root}"
+        )
+
+        perform_hooks(
+            "ebuild.postmerge.d",
+            *(pkg.cpv, pkg.root),
         )
 
         self._start_exit_hook(self.returncode)

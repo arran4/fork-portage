@@ -35,6 +35,7 @@ from portage.package.ebuild.digestcheck import digestcheck
 from portage.package.ebuild.digestgen import digestgen
 from portage.package.ebuild.doebuild import _check_temp_dir, _prepare_self_update
 from portage.package.ebuild.prepare_build_dirs import prepare_build_dirs
+from portage.util.hooks import perform_hooks
 
 import _emerge
 from _emerge.BinpkgFetcher import BinpkgFetcher
@@ -1116,7 +1117,7 @@ class Scheduler(PollScheduler):
             return FAILURE
         return os.EX_OK
 
-    def _record_pkg_failure(self, pkg, settings, ret):
+    def _record_pkg_failure(self, pkg, settings, ret, action="emerge", preposition="for"):
         """Record a package failure. This eliminates the package
         from the --keep-going merge list, and immediately calls
         _failed_pkg_msg if we have not been terminated."""
@@ -1129,8 +1130,13 @@ class Scheduler(PollScheduler):
             )
         )
         if not self._terminated_tasks:
-            self._failed_pkg_msg(self._failed_pkgs[-1], "emerge", "for")
+            self._failed_pkg_msg(self._failed_pkgs[-1], action, preposition)
             self._status_display.failed = len(self._failed_pkgs)
+
+        perform_hooks(
+            "ebuild.postfail.d",
+            *(pkg.cpv, pkg.root),
+        )
 
     def merge(self):
         if "--resume" in self.myopts:
@@ -1506,21 +1512,7 @@ class Scheduler(PollScheduler):
     def _do_merge_exit(self, merge):
         pkg = merge.merge.pkg
         if merge.returncode != os.EX_OK:
-            settings = merge.merge.settings
-            build_dir = settings.get("PORTAGE_BUILDDIR")
-            build_log = settings.get("PORTAGE_LOG_FILE")
-
-            self._failed_pkgs.append(
-                self._failed_pkg(
-                    build_dir=build_dir,
-                    build_log=build_log,
-                    pkg=pkg,
-                    returncode=merge.returncode,
-                )
-            )
-            if not self._terminated_tasks:
-                self._failed_pkg_msg(self._failed_pkgs[-1], "install", "to")
-                self._status_display.failed = len(self._failed_pkgs)
+            self._record_pkg_failure(pkg, merge.merge.settings, merge.returncode, action="install", preposition="to")
             return
 
         if merge.postinst_failure:
@@ -1536,6 +1528,11 @@ class Scheduler(PollScheduler):
             )
             self._failed_pkg_msg(
                 self._failed_pkgs_all[-1], "execute postinst for", "for"
+            )
+
+            perform_hooks(
+                "ebuild.postfail.d",
+                *(pkg.cpv, pkg.root),
             )
 
         self._task_complete(pkg)
@@ -1595,21 +1592,7 @@ class Scheduler(PollScheduler):
                 merge.addExitListener(self._merge_exit)
                 self._status_display.merges = len(self._task_queues.merge)
         else:
-            settings = build.settings
-            build_dir = settings.get("PORTAGE_BUILDDIR")
-            build_log = settings.get("PORTAGE_LOG_FILE")
-
-            self._failed_pkgs.append(
-                self._failed_pkg(
-                    build_dir=build_dir,
-                    build_log=build_log,
-                    pkg=build.pkg,
-                    returncode=build.returncode,
-                )
-            )
-            if not self._terminated_tasks:
-                self._failed_pkg_msg(self._failed_pkgs[-1], "emerge", "for")
-                self._status_display.failed = len(self._failed_pkgs)
+            self._record_pkg_failure(build.pkg, build.settings, build.returncode)
             self._deallocate_config(build.settings)
         self._jobs -= 1
         self._status_display.running = self._jobs
