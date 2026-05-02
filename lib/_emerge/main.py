@@ -97,6 +97,39 @@ def multiple_actions(action1, action2):
     sys.exit(1)
 
 
+
+
+class _valid_autounmask_choices:
+    _SUB_OPTIONS = (
+        "y", "n", "continue", "write", "keep-keywords", "keep-masks",
+        "keep-license", "keep-use", "backtrack-y", "backtrack-n", "only",
+        "unrestricted-atoms",
+    )
+    _SUB_OPTIONS_SET = frozenset(_SUB_OPTIONS)
+    _ACTION_MAP = {
+        "continue": ("autounmask_continue", "True"),
+        "write": ("autounmask_write", "True"),
+        "only": ("autounmask_only", "True"),
+        "keep-keywords": ("autounmask_keep_keywords", "True"),
+        "keep-masks": ("autounmask_keep_masks", "True"),
+        "keep-license": ("autounmask_license", "n"),
+        "keep-use": ("autounmask_use", "n"),
+        "backtrack-y": ("autounmask_backtrack", "y"),
+        "backtrack-n": ("autounmask_backtrack", "n"),
+        "unrestricted-atoms": ("autounmask_unrestricted_atoms", "True"),
+    }
+
+    def __contains__(self, s):
+        if s in ("True", "y", "n"):
+            return True
+        return all(token in self._SUB_OPTIONS_SET for token in s.split(","))
+
+    def __iter__(self):
+        return iter(("True",) + self._SUB_OPTIONS)
+
+valid_autounmask_choices = _valid_autounmask_choices()
+
+
 def insert_optional_args(args):
     """
     Parse optional arguments and insert a value if one has
@@ -136,12 +169,13 @@ def insert_optional_args(args):
 
     valid_integers_or_y_or_n = valid_integers_or_y_or_n()
 
+
     new_args = []
 
     default_arg_opts = {
         "--alert": y_or_n,
         "--ask": y_or_n,
-        "--autounmask": y_or_n,
+        "--autounmask": valid_autounmask_choices,
         "--autounmask-continue": y_or_n,
         "--autounmask-only": y_or_n,
         "--autounmask-keep-keywords": y_or_n,
@@ -320,6 +354,7 @@ def parse_opts(tmpcmdline, silent=False):
     y_or_n = ("y", "n")
     true_y_or_n = ("True", "y", "n")
     true_y = ("True", "y")
+
     argument_options = {
         "--alert": {
             "shortopt": "-A",
@@ -333,7 +368,7 @@ def parse_opts(tmpcmdline, silent=False):
         },
         "--autounmask": {
             "help": "automatically unmask packages",
-            "choices": true_y_or_n,
+            "choices": valid_autounmask_choices,
         },
         "--autounmask-backtrack": {
             "help": (
@@ -804,8 +839,15 @@ def parse_opts(tmpcmdline, silent=False):
     else:
         myoptions.ask = None
 
-    if myoptions.autounmask in true_y:
-        myoptions.autounmask = True
+    if myoptions.autounmask:
+        if myoptions.autounmask in true_y:
+            myoptions.autounmask = True
+        elif myoptions.autounmask not in ("n", "False"):
+            for token in myoptions.autounmask.split(","):
+                action = valid_autounmask_choices._ACTION_MAP.get(token)
+                if action:
+                    setattr(myoptions, *action)
+            myoptions.autounmask = True
 
     if myoptions.autounmask_continue in true_y:
         myoptions.autounmask_continue = True
