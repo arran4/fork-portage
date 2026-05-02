@@ -358,13 +358,16 @@ acceptance of the first choice. This option is
 intended to be set in the \fBmake.conf\fR(5)
 \fBEMERGE_DEFAULT_OPTS\fR variable.
 .TP
-.BR "\-\-autounmask [ y | n ]"
+.BR "\-\-autounmask [ y | n | <comma-separated list of options> ]"
 Automatically unmask packages and generate package.use
 settings as necessary to satisfy dependencies. This option
 is disabled by default, except for portions of behavior
 which are controlled by the \fB\-\-autounmask\-use\fR
 (\fB\-\-autounmask=n\fR
-disables autounmask behavior entirely). If any configuration
+disables autounmask behavior entirely).
+This flag can also take a comma-separated list of sub-options to conveniently enable multiple behaviors at once.
+For example, \fB\-\-autounmask=continue,write\fR is equivalent to specifying \fB\-\-autounmask\fR, \fB\-\-autounmask\-continue\fR, and \fB\-\-autounmask\-write\fR.
+Valid sub-options are \fBcontinue\fR, \fBwrite\fR, \fBonly\fR, \fBkeep\-keywords\fR, \fBkeep\-masks\fR, \fBkeep\-license\fR, \fBkeep\-use\fR, \fBbacktrack\-y\fR, \fBbacktrack\-n\fR, and \fBunrestricted\-atoms\fR. If any configuration
 changes are required, then they will be displayed
 after the merge list and emerge will immediately
 abort. If the displayed configuration changes are
