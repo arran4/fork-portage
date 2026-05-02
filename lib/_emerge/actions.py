@@ -524,17 +524,18 @@ def action_build(
                 prompt = "Would you like to merge these packages?"
         print()
         if prompt is not None and "--ask" in myopts:
-            import tempfile
             with tempfile.NamedTemporaryFile(mode='w', delete=False, prefix='ask_packages_') as f:
-                for pkg in mymergelist:
-                    if isinstance(pkg, Package):
-                        f.write(f"{pkg.cpv} {pkg.operation}\n")
-                f.flush()
-                perform_hooks("ask.d", f.name)
-            try:
-                os.unlink(f.name)
-            except OSError:
-                pass
+                try:
+                    for pkg in mymergelist:
+                        if isinstance(pkg, Package):
+                            f.write(f"{pkg.cpv} {pkg.operation}\n")
+                    f.close()
+                    perform_hooks("ask.d", f.name)
+                finally:
+                    try:
+                        os.unlink(f.name)
+                    except OSError:
+                        pass
         uq = UserQuery(myopts)
         if (
             prompt is not None
@@ -896,7 +897,7 @@ def action_depclean(
             scheduler=scheduler,
         )
 
-        if action == "depclean":
+        if action == "depclean" and rval == os.EX_OK:
             perform_hooks(
                 "postdepclean.d",
             )
