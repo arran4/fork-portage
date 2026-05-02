@@ -106,6 +106,18 @@ class _valid_autounmask_choices:
         "unrestricted-atoms",
     )
     _SUB_OPTIONS_SET = frozenset(_SUB_OPTIONS)
+    _ACTION_MAP = {
+        "continue": ("autounmask_continue", "True"),
+        "write": ("autounmask_write", "True"),
+        "only": ("autounmask_only", "True"),
+        "keep-keywords": ("autounmask_keep_keywords", "True"),
+        "keep-masks": ("autounmask_keep_masks", "True"),
+        "keep-license": ("autounmask_license", "n"),
+        "keep-use": ("autounmask_use", "n"),
+        "backtrack-y": ("autounmask_backtrack", "y"),
+        "backtrack-n": ("autounmask_backtrack", "n"),
+        "unrestricted-atoms": ("autounmask_unrestricted_atoms", "True"),
+    }
 
     def __contains__(self, s):
         if s in ("True", "y", "n"):
@@ -831,20 +843,8 @@ def parse_opts(tmpcmdline, silent=False):
         if myoptions.autounmask in true_y:
             myoptions.autounmask = True
         elif myoptions.autounmask not in ("n", "False"):
-            autounmask_action_map = {
-                "continue": ("autounmask_continue", True),
-                "write": ("autounmask_write", True),
-                "only": ("autounmask_only", True),
-                "keep-keywords": ("autounmask_keep_keywords", True),
-                "keep-masks": ("autounmask_keep_masks", True),
-                "keep-license": ("autounmask_license", "n"),
-                "keep-use": ("autounmask_use", "n"),
-                "backtrack-y": ("autounmask_backtrack", "y"),
-                "backtrack-n": ("autounmask_backtrack", "n"),
-                "unrestricted-atoms": ("autounmask_unrestricted_atoms", True),
-            }
             for token in myoptions.autounmask.split(","):
-                action = autounmask_action_map.get(token)
+                action = valid_autounmask_choices._ACTION_MAP.get(token)
                 if action:
                     setattr(myoptions, *action)
             myoptions.autounmask = True
