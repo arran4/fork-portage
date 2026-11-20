@@ -2,6 +2,7 @@
 # Distributed under the terms of the GNU General Public License v2
 
 import os
+from contextlib import ExitStack
 from unittest.mock import MagicMock, patch
 
 from _emerge.EbuildMerge import EbuildMerge
@@ -80,13 +81,15 @@ class EmergeHookTestCase(TestCase):
                 "vartree": MagicMock(dbapi=vardbapi),
             }
         }
-        with (
-            patch("_emerge.post_emerge.os.chdir"),
-            patch("_emerge.post_emerge.emergelog"),
-            patch("_emerge.post_emerge._flush_elog_mod_echo"),
-            patch("_emerge.post_emerge.display_news_notification"),
-            patch("_emerge.post_emerge.perform_hooks") as hooks,
-        ):
+        with ExitStack() as stack:
+            for target in (
+                "os.chdir",
+                "emergelog",
+                "_flush_elog_mod_echo",
+                "display_news_notification",
+            ):
+                stack.enter_context(patch(f"_emerge.post_emerge.{target}"))
+            hooks = stack.enter_context(patch("_emerge.post_emerge.perform_hooks"))
             post_emerge(None, {"--keep-going": True}, [], "/", trees, {"info": {}}, 1)
             hooks.assert_called_once_with(
                 "postemerge.d", "merge", "1", "True", prefix="/configured"
