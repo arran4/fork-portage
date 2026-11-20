@@ -115,6 +115,7 @@ def _run_ask_hooks(packages, config_root):
         except FileNotFoundError:
             pass
 
+
 def action_build(
     emerge_config,
     trees=DeprecationWarning,

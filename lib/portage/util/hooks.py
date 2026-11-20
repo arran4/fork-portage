@@ -42,7 +42,15 @@ def get_hooks_from_dir(rel_directory, prefix="/"):
 def perform_hooks(rel_directory, *argv, prefix="/"):
     for filepath, name in get_hooks_from_dir(rel_directory, prefix).items():
         # Keep each hook argument distinct instead of constructing shell text.
-        retval = portage.process.spawn([filepath, *(str(arg) for arg in argv)])
+        try:
+            retval = portage.process.spawn([filepath, *(str(arg) for arg in argv)])
+        except OSError as e:
+            writemsg_level(
+                f" {bad('*')} Failed to execute {name}: {e}\n",
+                level=logging.ERROR,
+                noiselevel=-1,
+            )
+            continue
 
         if retval != portage.os.EX_OK:
             writemsg_level(

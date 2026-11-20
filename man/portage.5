@@ -967,12 +967,14 @@ only.
 .BR ask.d/
 This directory is for user supplied hooks to be run before an interactive
 user prompt ("ask").  Each script is called in lexical order with the path to
-a file containing the packages and operations involved as its only argument.
+a temporary file containing one "CPV operation" pair per line as its only
+argument.  The temporary file is removed after the hooks finish.
 .fi
 .TP
 .BR ebuild.postfail.d/
-This directory is for user supplied hooks to be run when a package merge
-has failed.  Each script is called in lexical order with the following
+This directory is for user supplied hooks to be run when a package build,
+merge, or post-install phase fails.  Each script is called in lexical order
+with the following
 arguments:
 .I args:
         package cpv, ROOT
@@ -980,23 +982,26 @@ arguments:
 .TP
 .BR ebuild.postmerge.d/
 This directory is for user supplied hooks to be run when a package merge
-has succeeded.  Each script is called in lexical order with the following
+has succeeded, including the post-install phase.  Each script is called in
+lexical order with the following
 arguments:
 .I args:
         package cpv, ROOT
 .fi
 .TP
 .BR postdepclean.d/
-This directory is for user supplied hooks to be run after an emerge \-\-depclean
-operation.  Each script is called in lexical order without any arguments.
+This directory is for user supplied hooks to be run after a successful
+emerge \-\-depclean operation, even when there are no packages to remove.
+No hooks run during \-\-pretend.  Each script is called in lexical order
+without any arguments.
 .fi
 .TP
 .BR postemerge.d/
-This directory is for user supplied hooks to be run at the very end of
-an emerge session.  Each script is called in lexical order with the following
-arguments:
+This directory is for user supplied hooks to be run at the end of an emerge
+session, even if no packages changed.  No hooks run during \-\-pretend.
+Each script is called in lexical order with the following arguments:
 .I args:
-        primary action, return value, keep-going flag
+        primary action, return value, keep-going flag (True or False)
 .fi
 .TP
 .BR repos.conf
