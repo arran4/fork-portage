@@ -85,10 +85,13 @@ class EbuildMerge(CompositeTask):
             f"{pkg.cpv} to {pkg.root}"
         )
 
-        perform_hooks(
-            "ebuild.postmerge.d",
-            *(pkg.cpv, pkg.root),
-        )
+        if not self.postinst_failure:
+            perform_hooks(
+                "ebuild.postmerge.d",
+                pkg.cpv,
+                pkg.root,
+                prefix=self.settings["PORTAGE_CONFIGROOT"],
+            )
 
         self._start_exit_hook(self.returncode)
 

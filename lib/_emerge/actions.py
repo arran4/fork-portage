@@ -99,6 +99,22 @@ from _emerge.UseFlagDisplay import pkg_use_display
 from _emerge.UserQuery import UserQuery
 
 
+def _run_ask_hooks(packages, config_root):
+    """Pass the planned package operations to pre-confirmation hooks."""
+    package_file = tempfile.NamedTemporaryFile(
+        mode="w", encoding="utf-8", prefix="ask_packages_", delete=False
+    )
+    try:
+        with package_file:
+            for cpv, operation in packages:
+                package_file.write(f"{cpv} {operation}\n")
+        perform_hooks("ask.d", package_file.name, prefix=config_root)
+    finally:
+        try:
+            os.unlink(package_file.name)
+        except FileNotFoundError:
+            pass
+
 def action_build(
     emerge_config,
     trees=DeprecationWarning,
@@ -524,18 +540,14 @@ def action_build(
                 prompt = "Would you like to merge these packages?"
         print()
         if prompt is not None and "--ask" in myopts:
-            with tempfile.NamedTemporaryFile(mode='w', delete=False, prefix='ask_packages_') as f:
-                try:
-                    for pkg in mymergelist:
-                        if isinstance(pkg, Package):
-                            f.write(f"{pkg.cpv} {pkg.operation}\n")
-                    f.close()
-                    perform_hooks("ask.d", f.name)
-                finally:
-                    try:
-                        os.unlink(f.name)
-                    except OSError:
-                        pass
+            _run_ask_hooks(
+                (
+                    (pkg.cpv, pkg.operation)
+                    for pkg in mymergelist
+                    if isinstance(pkg, Package)
+                ),
+                settings["PORTAGE_CONFIGROOT"],
+            )
         uq = UserQuery(myopts)
         if (
             prompt is not None
@@ -897,10 +909,8 @@ def action_depclean(
             scheduler=scheduler,
         )
 
-        if action == "depclean" and rval == os.EX_OK:
-            perform_hooks(
-                "postdepclean.d",
-            )
+    if action == "depclean" and rval == os.EX_OK and "--pretend" not in myopts:
+        perform_hooks("postdepclean.d", prefix=settings["PORTAGE_CONFIGROOT"])
 
     if action == "prune":
         return rval

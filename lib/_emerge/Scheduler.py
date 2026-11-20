@@ -1135,7 +1135,9 @@ class Scheduler(PollScheduler):
 
         perform_hooks(
             "ebuild.postfail.d",
-            *(pkg.cpv, pkg.root),
+            pkg.cpv,
+            pkg.root,
+            prefix=settings["PORTAGE_CONFIGROOT"],
         )
 
     def merge(self):
@@ -1532,7 +1534,9 @@ class Scheduler(PollScheduler):
 
             perform_hooks(
                 "ebuild.postfail.d",
-                *(pkg.cpv, pkg.root),
+                pkg.cpv,
+                pkg.root,
+                prefix=merge.merge.settings["PORTAGE_CONFIGROOT"],
             )
 
         self._task_complete(pkg)

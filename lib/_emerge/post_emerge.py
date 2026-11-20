@@ -110,6 +110,16 @@ def post_emerge(myaction, myopts, myfiles, target_root, trees, mtimedb, retval):
 
     _flush_elog_mod_echo()
 
+    # Run even when no packages changed, but not for --pretend.
+    if "--pretend" not in myopts:
+        perform_hooks(
+            "postemerge.d",
+            myaction or "merge",
+            str(retval),
+            str("--keep-going" in myopts),
+            prefix=settings["PORTAGE_CONFIGROOT"],
+        )
+
     if not vardbapi._pkgs_changed:
         # GLEP 42 says to display news *after* an emerge --pretend
         if "--pretend" in myopts:
@@ -166,13 +176,6 @@ def post_emerge(myaction, myopts, myfiles, target_root, trees, mtimedb, retval):
                 level=logging.ERROR,
                 noiselevel=-1,
             )
-
-    # Passing basic contextual information to postemerge.d hooks
-    # arguments: action, return_value, keep_going
-    perform_hooks(
-        "postemerge.d",
-        *(myaction or "merge", str(retval), str("--keep-going" in myopts)),
-    )
 
     clean_logs(settings)
 
