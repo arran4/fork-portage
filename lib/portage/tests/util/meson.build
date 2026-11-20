@@ -5,6 +5,7 @@ py.install_sources(
         'test_digraph.py',
         'test_file_copier.py',
         'test_getconfig.py',
+        'test_hooks.py',
         'test_grabdict.py',
         'test_install_mask.py',
         'test_manifest.py',

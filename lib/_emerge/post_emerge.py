@@ -16,6 +16,7 @@ from portage.util.portage_lru_cache import show_lru_cache_info
 from .chk_updated_cfg_files import chk_updated_cfg_files
 from .emergelog import emergelog
 from ._flush_elog_mod_echo import _flush_elog_mod_echo
+from portage.util.hooks import perform_hooks
 
 
 def clean_logs(settings):
@@ -108,6 +109,16 @@ def post_emerge(myaction, myopts, myfiles, target_root, trees, mtimedb, retval):
     emergelog("notitles" not in settings.features, exit_msg)
 
     _flush_elog_mod_echo()
+
+    # Run even when no packages changed, but not for --pretend.
+    if "--pretend" not in myopts:
+        perform_hooks(
+            "postemerge.d",
+            myaction or "merge",
+            str(retval),
+            str("--keep-going" in myopts),
+            prefix=settings["PORTAGE_CONFIGROOT"],
+        )
 
     if not vardbapi._pkgs_changed:
         # GLEP 42 says to display news *after* an emerge --pretend

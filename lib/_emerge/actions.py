@@ -67,6 +67,7 @@ from portage.util import (
 from portage.util.digraph import digraph
 from portage.util.path import first_existing
 from portage.util.SlotObject import SlotObject
+from portage.util.hooks import perform_hooks
 from portage.util._async.run_main_scheduler import run_main_scheduler
 from portage.util._async.SchedulerInterface import SchedulerInterface
 from portage.util._eventloop.global_event_loop import global_event_loop
@@ -96,6 +97,23 @@ from _emerge.unmerge import unmerge
 from _emerge.UnmergeDepPriority import UnmergeDepPriority
 from _emerge.UseFlagDisplay import pkg_use_display
 from _emerge.UserQuery import UserQuery
+
+
+def _run_ask_hooks(packages, config_root):
+    """Pass the planned package operations to pre-confirmation hooks."""
+    package_file = tempfile.NamedTemporaryFile(
+        mode="w", encoding="utf-8", prefix="ask_packages_", delete=False
+    )
+    try:
+        with package_file:
+            for cpv, operation in packages:
+                package_file.write(f"{cpv} {operation}\n")
+        perform_hooks("ask.d", package_file.name, prefix=config_root)
+    finally:
+        try:
+            os.unlink(package_file.name)
+        except FileNotFoundError:
+            pass
 
 
 def action_build(
@@ -522,6 +540,15 @@ def action_build(
             else:
                 prompt = "Would you like to merge these packages?"
         print()
+        if prompt is not None and "--ask" in myopts:
+            _run_ask_hooks(
+                (
+                    (pkg.cpv, pkg.operation)
+                    for pkg in mymergelist
+                    if isinstance(pkg, Package)
+                ),
+                settings["PORTAGE_CONFIGROOT"],
+            )
         uq = UserQuery(myopts)
         if (
             prompt is not None
@@ -882,6 +909,9 @@ def action_depclean(
             ordered=ordered,
             scheduler=scheduler,
         )
+
+    if action == "depclean" and rval == os.EX_OK and "--pretend" not in myopts:
+        perform_hooks("postdepclean.d", prefix=settings["PORTAGE_CONFIGROOT"])
 
     if action == "prune":
         return rval

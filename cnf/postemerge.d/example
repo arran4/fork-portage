@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Example /etc/portage/postemerge.d script. Make it executable (chmod +x) for
+# Portage to process it.
+#
+# postemerge.d hooks are called at the end of an emerge session.
+# The arguments are the primary action, the return value, and the keep-going flag.
+
+action=${1}
+return_value=${2}
+keep_going=${3}
+
+echo "* In postemerge hook"
+echo "** Action: ${action}"
+echo "** Return value: ${return_value}"
+echo "** Keep-going: ${keep_going}"
+
+# exit 0

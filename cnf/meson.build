@@ -120,12 +120,21 @@ install_data(
     install_dir : portage_datadir / 'config'
 )
 
-install_data(
-    [
-        'repo.postsync.d/example'
-    ],
-    install_dir : portage_datadir / 'config' / 'repo.postsync.d'
-)
+foreach hook_dir : [
+    'ask.d',
+    'ebuild.postfail.d',
+    'ebuild.postmerge.d',
+    'postdepclean.d',
+    'postemerge.d',
+    'repo.postsync.d',
+]
+    install_data(
+        [
+            hook_dir / 'example'
+        ],
+        install_dir : portage_datadir / 'config' / hook_dir
+    )
+endforeach
 
 install_data(
     [
