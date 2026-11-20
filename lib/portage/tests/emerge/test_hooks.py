@@ -7,6 +7,7 @@ from unittest.mock import MagicMock, patch
 from _emerge.EbuildMerge import EbuildMerge
 from _emerge.Scheduler import Scheduler
 from _emerge.actions import _run_ask_hooks
+from _emerge.post_emerge import post_emerge
 from portage.tests import TestCase
 
 
@@ -64,6 +65,35 @@ class EmergeHookTestCase(TestCase):
                         prefix="/configured",
                     )
                 merge._start_exit_hook.assert_called_once()
+
+
+    def test_postemerge_runs_without_changes_and_skips_pretend(self):
+        settings = MagicMock()
+        settings.features = set()
+        settings.__getitem__.return_value = "/configured"
+        vardbapi = MagicMock()
+        vardbapi.settings = settings
+        vardbapi._pkgs_changed = False
+        trees = {
+            "/": {
+                "root_config": MagicMock(),
+                "vartree": MagicMock(dbapi=vardbapi),
+            }
+        }
+        with (
+            patch("_emerge.post_emerge.os.chdir"),
+            patch("_emerge.post_emerge.emergelog"),
+            patch("_emerge.post_emerge._flush_elog_mod_echo"),
+            patch("_emerge.post_emerge.display_news_notification"),
+            patch("_emerge.post_emerge.perform_hooks") as hooks,
+        ):
+            post_emerge(None, {"--keep-going": True}, [], "/", trees, {"info": {}}, 1)
+            hooks.assert_called_once_with(
+                "postemerge.d", "merge", "1", "True", prefix="/configured"
+            )
+            hooks.reset_mock()
+            post_emerge(None, {"--pretend": True}, [], "/", trees, {"info": {}}, 0)
+            hooks.assert_not_called()
 
     def test_failed_package_dispatches_to_selected_config_root(self):
         scheduler = MagicMock()
